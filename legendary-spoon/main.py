@@ -127,7 +127,13 @@ def main():
     # Possible: add checking for the program type ("text2speech" or "video") # NOT IMPLEMENTED
     # Used by -p and -v flags
 
+    # Set video dimensions - e.g. 640x360 (16:9) is the 360p resolution YouTube uses
+    video_width = "640"
+    video_height = "360"
 
+    # The duration individual images will be shown on-screen in seconds
+    default_image_duration = '6'
+    selected_image_duration = default_image_duration
 
     imgDir = None # Stores the directory path to the randomly selected video background pictures
     param_s, param_s_path, param_p, param_i, param_o = (None,)*5 # Mass-initialize a bunch of variables as None - currently UNUSED
@@ -142,6 +148,12 @@ def main():
     parser.add_argument("-v", help="The path to the video generation / converter / rendering program such as ffmpeg, used to put the speech into a video.", metavar="VIDEO_PROGRAM")
     parser.add_argument("-o", default="output.mp4", help="The output file name. Usually defaults to output.[EXT] (.wav and .mp4), depending on the used text-to-speech program.", type=str, metavar="OUTPUT_FILE")
     parser.add_argument("--imgdir", action="store", help="The directory where the images for the image slideshow are..", metavar="IMAGE_DIRECTORY")
+    
+    # Extra features: 1) video dimensions, 2) animation mode (non-shuffled) and 3) still image duration
+    
+    parser.add_argument("--resolution", action="store", help="Set the video resolution (default: 640x360)", metavar="WIDTHxHEIGHT")
+    parser.add_argument("--animation", action="store_true", help="Enable to switch off random image order.")
+    parser.add_argument("--imgduration", action="store", type=int, help="The directory where the images for the image slideshow are..", metavar="IMAGE_DURATION")
 
     cwd = os.getcwd() # Current working directory
 
@@ -159,8 +171,9 @@ def main():
         logging.exception('Error while trying to create the new config file')
 
 
-    # print("s: ", args.s) # DEBUG
-
+    #print("s: ", args.s) # DEBUG
+    #print('args: {}'.format(args)) # DEBUG
+    #return
 
     ''' Calculation-effienct ways to generate integers from floating point values when dividing -- n = the value and d = divider:
         -to round down: int(x)
@@ -308,6 +321,36 @@ def main():
         print('Error - {} is not an existing directory.'.format(image_directory))
 
 
+    # Flag --resolution: Changes the resolution, default 640x360, reverts to the default if a bad parameter is detected to avoid a distorted outcome
+    try:
+        if args.resolution is not None:
+            tmp_split_list = args.resolution.lower().split('x')
+            if len(tmp_split_list) == 2:
+                if int(tmp_split_list[0]) <= 0:
+                    raise ValueError('An invalid non-positive parameter for video_height: {0}'.format( tmp_split_list[0]) )
+                elif int(tmp_split_list[1]) <= 0:
+                    raise ValueError('An invalid non-positive parameter for video_width: {0}'.format( tmp_split_list[1]) )
+                else:
+                    video_height = tmp_split_list[0]
+                    video_width = tmp_split_list[1]
+            else:
+                raise TypeError('An invalid number of parameters: {0}, required: 2'.format(len_tmp_split_list))
+    except BaseException:
+        logging.exception('Exception while converting --resolution parameter \'%s\', reverting back to the default resolution', args.resolution)
+    
+    # Flag --animation: Disables image order shuffling, useful for creating intentional sequences
+    # No need to do anything here as it is a simple boolean False / True flag - checked for prior to shuffling the image list
+    
+    # Flag --imgduration: Changes the image duration, default 6 seconds
+    try:
+        if args.imgduration is not None and int(args.imgduration) > 0:
+            selected_image_duration = str(args.imgduration)
+    except BaseException:
+        logging.exception('Exception while converting --imgduration parameter \'%s\'', args.imgduration)
+
+
+
+
     # TODO: Let the user set up the program parameters preferably with a graphical front-end with preset common program options
     command_parameter_string = None
     split_command = []
@@ -357,13 +400,12 @@ def main():
     concat_file_extension = '.txt'
     concat_file_name = chosen_file_name_base + concat_file_extension
     image_list_concat_string = ""
-    # The duration individual images will be shown on-screen in seconds
-    default_image_duration = '6'
-    selected_image_duration = default_image_duration
 
-    # Shuffle the list to create varied video slideshow fodder
-    random.seed() # Reset the random seed allegedly based on the runtime time
-    random.shuffle(image_list)
+
+    # Shuffle the list to create varied video slideshow fodder, shuffle if and only if the --animation flag is not used
+    if not args.animation:
+        random.seed() # Reset the random seed allegedly based on the runtime time
+        random.shuffle(image_list)
     
     # Currently not used, probably
     '''
@@ -392,10 +434,6 @@ def main():
             image_list_concat_string = image_list_concat_string + '|' + image_list[i]
     #print('image_list_concat_string: {}'.format(image_list_concat_string)) #DEBUG and warning - can generate a lot of text
     '''
-
-    # Set video dimensions - e.g. 640x360 (16:9) is the 360p resolution YouTube uses
-    video_width = "640"
-    video_height = "360"
 
 
     # Phase 2: Try to convert the video with ffmpeg
