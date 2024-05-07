@@ -20,7 +20,7 @@ This is integration software, so it relies on the user installing and setting up
 1) balcon (the currently used text-to-speech command-line software), available at: https://cross-plus-a.com/bconsole.htm
 2) ffmpeg (video compositing), downloadable from: https://ffmpeg.org/download.html
 3) A text file to input into the T2S. sample_text.txt has been provided for you among the sources. The easiest way to produce a similar text files for testing is to say something to an AI chat bot such as ChatGPT and saving the response.
-4) A directory with image files (for creating a slideshow, defaulting to a random image selection order)
+4) A directory with image files (for creating a slideshow, defaulting to a random image selection order). You can get the required placeholder image set from here: https://archive.org/details/2020-random-memes
 
 - demo.py has all this information and a bunch of helpful input prompts, so it is a bit easier for getting the feel of what this software does.
 
