@@ -91,3 +91,6 @@ python main.py --help
 
 ## Spare ideas
 1. Using recorded audio as the audio track instead of text
+
+## Demo video
+https://www.youtube.com/watch?v=BZ7CwPpXuvs 
