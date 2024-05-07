@@ -381,6 +381,8 @@ def main():
 
     A useful slideshow command with 640x360 aspect-ratio-preserving padding applied i.e. it shrinks the images a bit while preserving the look by adding black sidebar padding:
     ffmpeg -f concat -i list777.txt -vf "scale=w=640:h=360:force_original_aspect_ratio=1,pad=640:360:(ow-iw)/2:(oh-ih)/2" -t 17 -profile:v baseline -pix_fmt yuv420p roflcopter.mp4
+    
+    Update: the -profile:v baseline parameter caused conversions issues. Apparently it is not even necessary as long as one uses the -pix_fmt yuv420p one.
     ''' # COMMENT_END
 
     # Get a file list with full file paths, excluding the directories - further type checks could pointlessly exclude future file types
@@ -478,10 +480,11 @@ def main():
         
         # Denote the video-only part with "_video_only", the -an explicitly tells ffmpeg to not include any audio tracks
               
-        video_parameter_string = "-f concat -i {0} -vf scale=w={1}:h={2}:force_original_aspect_ratio=1,pad={1}:{2}:(ow-iw)/2:(oh-ih)/2 -t {3} -profile:v baseline -pix_fmt yuv420p -an {4}".format(concat_file_name, video_width, video_height, str(speech_duration), chosen_file_name_base + "_video_only" + chosen_file_name_extension)
+        video_parameter_string = "-f concat -i {0} -vf scale=w={1}:h={2}:force_original_aspect_ratio=1,pad={1}:{2}:(ow-iw)/2:(oh-ih)/2 -t {3} -pix_fmt yuv420p -nostats -hide_banner -an {4}".format(concat_file_name, video_width, video_height, str(speech_duration), chosen_file_name_base + "_video_only" + chosen_file_name_extension)
         split_video_command = video_parameter_string.split(" ")
         
-        audio_video_parameter_string = '-i {} -i {} -c:v copy {}'.format(chosen_file_name_base + "_video_only" + chosen_file_name_extension, wave_file_name, chosen_file_name_base + chosen_file_name_extension)
+        # ffmpeg seems to have issues combining mono and stereo tracks -> make the mono track a stereo one (related to teh -ac 2 i.e. stereo parameter)
+        audio_video_parameter_string = '-i {} -i {} -c:v copy -af aformat=sample_fmts=s16:sample_rates=44100:channel_layouts=stereo -nostats -hide_banner {}'.format(chosen_file_name_base + "_video_only" + chosen_file_name_extension, wave_file_name, chosen_file_name_base + chosen_file_name_extension)
         split_audio_video_command = audio_video_parameter_string.split(" ")
 
         # TODO: Change this part to iterate each image segment iteratively so that you generate the video chunks per each image and then combine it
@@ -493,7 +496,7 @@ def main():
             while(video_duration_left > 0):
                 tmp_video_chunk_file_name = str(chosen_file_name_base + "_video_only_" + str(video_chunk_count) + chosen_file_name_extension)
                 tmp_current_duration = int(selected_image_duration) if int(selected_image_duration) < int(video_duration_left) else int(video_duration_left)
-                video_chunk_command_string = "-i {0} -vf scale=w={1}:h={2}:force_original_aspect_ratio=1,pad={1}:{2}:(ow-iw)/2:(oh-ih)/2 -t {3} -profile:v baseline -pix_fmt yuv420p -an {4}".format( image_list[ video_chunk_count % image_count ], video_width, video_height, str(tmp_current_duration), tmp_video_chunk_file_name)
+                video_chunk_command_string = "-i {0} -vf scale=w={1}:h={2}:force_original_aspect_ratio=1,pad={1}:{2}:(ow-iw)/2:(oh-ih)/2 -t {3} -pix_fmt yuv420p -nostats -hide_banner -an {4}".format( image_list[ video_chunk_count % image_count ], video_width, video_height, str(tmp_current_duration), tmp_video_chunk_file_name)
                 split_video_chunk_command = video_chunk_command_string.split(" ")
                 # Generates the chunk
                 tmp_ret = command_line_execute(whitespace_split_command= [video_program_path] + split_video_chunk_command, success_message="", failure_message="Failed to generate a video chunk.")
@@ -505,7 +508,7 @@ def main():
             # Step 1.1: create one extra chunk to sidestep the combatibility issues related to having only one chunk - only VLC and ffplay will play those files i.e. largely non-playable, it is related to how awfully ffmpeg encodes those image-derived video tracks, will probably get cut off anyway
             blank_duration = 1
             blank_chunk_file_name = str(chosen_file_name_base + "_video_only_" + 'blank' + chosen_file_name_extension)
-            blank_chunk_command_string = "-f lavfi -i color=c=black:s={0}x{1} -vf scale=w={0}:h={1}:force_original_aspect_ratio=1,pad={0}:{1}:(ow-iw)/2:(oh-ih)/2: -t {2} -profile:v baseline -pix_fmt yuv420p -an {3}".format( video_width, video_height, str(blank_duration), blank_chunk_file_name)
+            blank_chunk_command_string = "-f lavfi -i color=c=black:s={0}x{1} -vf scale=w={0}:h={1}:force_original_aspect_ratio=1,pad={0}:{1}:(ow-iw)/2:(oh-ih)/2: -t {2} -pix_fmt yuv420p -nostats -hide_banner -an {3}".format( video_width, video_height, str(blank_duration), blank_chunk_file_name)
             split_blank_chunk_command = blank_chunk_command_string.split(" ")
             tmp_ret = command_line_execute(whitespace_split_command= [video_program_path] + split_blank_chunk_command, success_message="", failure_message="Failed to generate the blank chunk.")
             # The blank chunk is added to the list of to-be-combined video chunks, eliminating issues with how ffmpeg makes single-image videos

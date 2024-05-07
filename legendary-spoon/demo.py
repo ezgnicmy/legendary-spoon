@@ -122,6 +122,15 @@ def check_file(file_path, env_var_name, is_file=True, config_file_name = 'demo.i
 def user_input(input_message=""):
     return input(input_message) # It can be this simple until more features are needed, a placeholder implementation
 
+# Loops some repetitive check_file checks
+def check_loop(file_path, env_variable, input_message, is_file = True):
+    while ( file_path is None):
+            file_path = check_file(file_path, env_variable, is_file = is_file)
+            if file_path is None: #  Do a prompt only if no stored values are found
+                file_path = check_file(user_input(input_message), env_variable, is_file = is_file) # Does a user prompt and feeds it into check_file() as a parameter
+    return file_path
+
+
 # Runs a simple demo prompt
 def main():
 
@@ -148,10 +157,8 @@ def main():
   
     image_dir_input_msg = "\nGive the path of the image directory you want to source images from, unless you have set it earlier (with this prompt or manually with {0} env variable): > ".format(imgdir_env_variable)
   
-    while (image_dir is None ):
-            image_dir = check_file(image_dir, imgdir_env_variable, is_file=False) 
-            if image_dir is None:
-                image_dir = user_input(image_dir_input_msg)
+    image_dir = check_loop(image_dir, imgdir_env_variable, image_dir_input_msg, is_file = False) # Checks for stored values and prompts for a file path if old paths cannot be used
+
     
 #            env_image_dir = os.environ.get(imgdir_env_variable)
 #            if os.path.isdir(  os.path.abspath(image_dir)  ):
@@ -163,17 +170,12 @@ def main():
 
     balcon_input_msg = "\nGive the path of the balcon executable you want to use, unless you have set it earlier (with this prompt or manually with {0} env variable): > ".format(balcon_path_env_variable)
 
-    while ( balcon_path is None):
-            balcon_path = check_file(balcon_path, balcon_path_env_variable, is_file=True)
-            if balcon_path is None:
-                balcon_path = user_input(balcon_input_msg)
+    balcon_path = check_loop(balcon_path, balcon_path_env_variable, balcon_input_msg, is_file = True) # A stored path and then a possible prompt
     
     ffmpeg_input_msg = "\nGive the path of the ffmpeg executable you want to use, unless you have set it earlier (with this prompt or manually with {0} env variable): > ".format(ffmpeg_path_env_variable)
     
-    while ( ffmpeg_path is None):
-            ffmpeg_path = check_file(ffmpeg_path, ffmpeg_path_env_variable, is_file=True)
-            if ffmpeg_path is None:
-                ffmpeg_path = user_input(ffmpeg_input_msg)
+    ffmpeg_path = check_loop(ffmpeg_path, ffmpeg_path_env_variable, ffmpeg_input_msg, is_file = True) # Stored file and possible a prompt
+
 
     # Let's see if the variables have changed
     #print('img evn:' + str(os.environ.get(imgdir_env_variable ))) # DEBUG
