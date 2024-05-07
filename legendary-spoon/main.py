@@ -3,35 +3,40 @@
 # The package will be None unless set manually in some cases, which will prevent importing modules i.e. .py files from it
 __package__ = "legendary_spoon"
 
-# A modulizing trick: wrap the whole thing inside a main() function / object, import-friendly, enabling multiple instantiating and using it as a component in other source code
-def main():
 
-    # Balcon is the command-line implementation of balabolka, a particularly capable, open-source, text-to-speech software. It uses the Windows Speech API.
-    # E.g.:  balcon -i textfile -w output.wav
+import os
+import sys
+
+import logging # Deals with some exception messaging
+import subprocess # Implements forking i.e. starting command line processes to do type in the setting parameters in an automated fashion
+import random # For generating dynamic slideshows to serve as basic, impromptu footage
+
+# (2) used for getting the length of a .wav audio file
+import wave
+import contextlib
+
+import argparse # Processes command line parameters
+
+# To allow some simple configuration re-use for lazy people
+from configparser import ConfigParser
+config = ConfigParser()
+
+def save_setting(config, config_file_path, param_list_s, curr_s_index):
+                    tmp = curr_s_index
+                    config.read(config_file_path)
+                    #print('sections: ', config.sections(), ", config file: ", config_file_path) # DEBUG
+                    full_program_path = os.path.abspath(param_list_s[tmp+1]) # Convert the path into a full path
+                    if not os.path.exists(full_program_path): # Warn the user in case the file not existing
+                        print('Warning - the program file does not exist. The conversion is not likely to work.')
+                    if not config.has_section(param_list_s[tmp]):
+                        config.add_section(param_list_s[tmp])
+                    config.set(param_list_s[tmp], 'TEXT2SPEECH_PROGRAM_PATH', full_program_path)
+                    with open(config_file_path, 'w') as f: # This operation blocks disk reads - do not put anything other than writing actions here
+                        config.write(f)
 
 
-
-    import os
-    import sys
-
-    import logging # Deals with some exception messaging
-    import subprocess # Implements forking i.e. starting command line processes to do type in the setting parameters in an automated fashion
-    import random # For generating dynamic slideshows to serve as basic, impromptu footage
-
-    # (2) used for getting the length of a .wav audio file
-    import wave
-    import contextlib
-
-    import argparse # Processes command line parameters
-
-    # To allow some simple configuration re-use for lazy people
-    from configparser import ConfigParser
-    config = ConfigParser()
-    
-    # Checks and reads the program path from the config file, program_param can be a preset config alias or a full path
-    # Possible: add checking for the program type ("text2speech" or "video") # NOT IMPLEMENTED
-    # Used by -p and -v flags
-    def check_program(program_param, config_file_path, parser, p_type="undefined"):
+# Deals with the -p and -v flags
+def check_program(program_param, config_file_path, parser, p_type="undefined"):
         text_to_speech_program_path = None
         if program_param is not None and program_param.lower() is not 'default':
             try:
@@ -58,24 +63,24 @@ def main():
                 logging.exception('Exception when processing a save-preset parameter %s', program_param)
         return text_to_speech_program_path
 
-    # A subprocess wrapper
-    # subprocess is the Python equivalent for fork() - has the strange quirks such as 1) requiring command-line strings as whitespace-delimited string list and 2) cannot deal with single quotes i.e. '', meaning you have to use double-quotes "" in the parameter inputs to avoid critical issues with it
-    def command_line_execute(whitespace_split_command, success_message='The subprocess exited without issues.', failure_message='A failure happened while running'):
+# A subprocess wrapper
+# subprocess is the Python equivalent for fork() - has the strange quirks such as 1) requiring command-line strings as whitespace-delimited string list and 2) cannot deal with single quotes i.e. '', meaning you have to use double-quotes "" in the parameter inputs to avoid critical issues with it
+def command_line_execute(whitespace_split_command, success_message='The subprocess exited without issues.', failure_message='A failure happened while running'):
         try:
             ret_code = subprocess.call(whitespace_split_command)
             if ret_code == 0:
                 print(success_message)
                 return ret_code
             else:
-                print("Error code \'{}\' with the subproces parameters {}: {}".format(ret_code, whitespace_split_command, failure_message))
+                print("Error code \'{}\' with the subprocess parameters {}: {}".format(ret_code, whitespace_split_command, failure_message))
                 # sys.exit(1) # Use the code 1 to signal a command-line error
                 return ret_code
         except FileNotFoundError:
             print ("The program file \'{0}\' not found. Exiting.".format(whitespace_split_command))
             sys.exit(1) # Use the code 1 to signal a command-line error
 
-    # Returns the length of the parameter .wav file, the unit: seconds (int)
-    def get_wave_file_length(wave_file_path):
+# Returns the length of the parameter .wav file, the unit: seconds (int)
+def get_wave_file_length(wave_file_path):
         # Get the length of the generated .wav file to fit the slideshow with it
         speech_duration = 0
         try:
@@ -88,8 +93,8 @@ def main():
             logging.exception('Exception when looking up a wave file duration %s', wave_file_path)
         return speech_duration
 
-    # Writes a concat file list for ffmpeg to combine files with
-    def create_concat_file(image_list, concat_file_name, image_default_duration = 6):
+# Writes a concat file list for ffmpeg to combine files with
+def create_concat_file(image_list, concat_file_name, default_image_duration = 6):
         image_list_concat_string = ""
         try:
             for file_name in image_list:
@@ -101,15 +106,26 @@ def main():
         except BaseException:
             logging.exception('Exception while trying to create a concat file %s', concat_file_name)
 
-    # Deletes the files used to generate the video
-    def remove_listed_files(file_list):
+# Deletes the files used to generate the video
+def remove_listed_files(file_list):
         try:
             for file in file_list:
                 os.remove(file)
         except BaseException:
             logging.exception('Exception while deleting the temporary image list file \'%s\'', file)
 
-    # Method part end
+# Method part end
+
+
+# A modulizing trick: wrap the whole thing inside a main() function / object, import-friendly, enabling multiple instantiating and using it as a component in other source code
+def main():
+
+    # Balcon is the command-line implementation of balabolka, a particularly capable, open-source, text-to-speech software. It uses the Windows Speech API.
+    # E.g.:  balcon -i textfile -w output.wav
+    
+    # Checks and reads the program path from the config file, program_param can be a preset config alias or a full path
+    # Possible: add checking for the program type ("text2speech" or "video") # NOT IMPLEMENTED
+    # Used by -p and -v flags
 
 
 
@@ -176,7 +192,7 @@ def main():
     s_values_set = [] # Tracks and lists the added or changed config preset entries
     if args.s is not None and len(args.s) > 1 and args.s[0] is not None and args.s[1] is not None:
         try:
-            # The following line simply divides the param list length by 2 and rounds it down. Th
+            # The following line simply divides the param list length by 2 and rounds it down
             for i in range(int(len(args.s) / 2)):
                 tmp = i * 2; # A store-only variable, practically a constant. It is there simplify the index parameters and to cut down on redundant calculations
                 if os.path.exists(os.path.abspath(args.s[tmp])): # Check out of sync params (here: the alias name) - reject AND do-not-fix behavior
@@ -186,16 +202,7 @@ def main():
                 elif args.s[0].lower() is 'default':
                     print('Forbidden alias name detected, do not use \"default\" as your preset alias.')
                 else:
-                    config.read(config_file_path)
-                    #print('sections: ', config.sections(), ", config file: ", config_file_path) # DEBUG
-                    full_program_path = os.path.abspath(args.s[tmp+1]) # Convert the path into a full path
-                    if not os.path.exists(full_program_path): # Warn the user in case the file not existing
-                        print('Warning - the program file does not exist. The conversion is not likely to work.')
-                    if not config.has_section(args.s[tmp]):
-                        config.add_section(args.s[tmp])
-                    config.set(args.s[tmp], 'TEXT2SPEECH_PROGRAM_PATH', full_program_path)
-                    with open(config_file_path, 'w') as f: # This operation blocks disk reads - do not put anything other than writing actions here
-                        config.write(f)
+                    save_setting(config = config, config_file_path = config_file_path, param_list_s = args.s, curr_s_index = tmp)
                     s_flag_set = True # Used mostly for internal status checking
                     s_values_set = s_values_set + [args.s[tmp], args.s[tmp+1]]
         except BaseException:
@@ -450,15 +457,25 @@ def main():
                 tmp_current_duration = int(selected_image_duration) if int(selected_image_duration) < int(video_duration_left) else int(video_duration_left)
                 video_chunk_command_string = "-i {0} -vf scale=w={1}:h={2}:force_original_aspect_ratio=1,pad={1}:{2}:(ow-iw)/2:(oh-ih)/2 -t {3} -profile:v baseline -pix_fmt yuv420p -an {4}".format( image_list[ video_chunk_count % image_count ], video_width, video_height, str(tmp_current_duration), tmp_video_chunk_file_name)
                 split_video_chunk_command = video_chunk_command_string.split(" ")
+                # Generates the chunk
                 tmp_ret = command_line_execute(whitespace_split_command= [video_program_path] + split_video_chunk_command, success_message="", failure_message="Failed to generate a video chunk.")
                 # Add the new file if the chunk generation produces a clean result, else keep it as is
                 chunk_file_list = chunk_file_list + [tmp_video_chunk_file_name]
                 temporary_file_list = ( temporary_file_list + [tmp_video_chunk_file_name] if tmp_ret == 0 else temporary_file_list )
                 video_chunk_count = video_chunk_count + 1
                 video_duration_left = video_duration_left - tmp_current_duration
+            # Step 1.1: create one extra chunk to sidestep the combatibility issues related to having only one chunk - only VLC and ffplay will play those files i.e. largely non-playable, it is related to how awfully ffmpeg encodes those image-derived video tracks, will probably get cut off anyway
+            blank_duration = 1
+            blank_chunk_file_name = str(chosen_file_name_base + "_video_only_" + 'blank' + chosen_file_name_extension)
+            blank_chunk_command_string = "-f lavfi -i color=c=black:s={0}x{1} -vf scale=w={0}:h={1}:force_original_aspect_ratio=1,pad={0}:{1}:(ow-iw)/2:(oh-ih)/2: -t {2} -profile:v baseline -pix_fmt yuv420p -an {3}".format( video_width, video_height, str(blank_duration), blank_chunk_file_name)
+            split_blank_chunk_command = blank_chunk_command_string.split(" ")
+            tmp_ret = command_line_execute(whitespace_split_command= [video_program_path] + split_blank_chunk_command, success_message="", failure_message="Failed to generate the blank chunk.")
+            # The blank chunk is added to the list of to-be-combined video chunks, eliminating issues with how ffmpeg makes single-image videos
+            chunk_file_list = chunk_file_list + [blank_chunk_file_name]
+            
             # Step 2: combine the video-only chunks
             # Create the chunk listing file for ffmpeg
-            create_concat_file(image_list = chunk_file_list, concat_file_name = concat_file_name, image_default_duration = selected_image_duration)
+            create_concat_file(image_list = chunk_file_list, concat_file_name = concat_file_name, default_image_duration = selected_image_duration)
         
             # The video_only + video + audio stuff
             command_line_execute(whitespace_split_command= [video_program_path] + split_video_command, success_message="The video-only generation program executed successfully.", failure_message="An error occurred with the video rendering program. Check that your image files are of the same file type (especially if you get error 69), if the files are open in another program and close it or use another output file name. Often simply repeating the command will fix the issue as the order it picks images from the directory is randomized each time.")
@@ -486,6 +503,7 @@ def main():
            
 #    print("__package__ = ", __package__) # Outputs "None"
 #    print("__name__ = ", __name__) # Outputs "__main__"
+    return 0 # This is useful in case it crashes before reaching this point, i.e. would effectively return None . Copefully.
 # END_OF_MAIN - leave the main stuff inside main()
 
 # This structuring prevents the possible script code from being unintentionally executed when importing the module
