@@ -17,6 +17,7 @@ This project is spec'd for Python 3.4.3 (released February 25th, 2015) i.e. the 
 
 This is integration software, so it relies on the user installing and setting up certain programs and input files beforehand. You need certain free resources:
 
+0) As a Python project, you need the Python to run the script. You can get one from here: https://www.python.org/downloads/ . On Windows, it is recommended to pick the installer version if you do not want to set the PATH environment variable by hand so that the system can find the python executables without having to type full paths every single time.
 1) balcon (the currently used text-to-speech command-line software), available at: https://cross-plus-a.com/bconsole.htm
 2) ffmpeg (video compositing), downloadable from: https://ffmpeg.org/download.html
 3) A text file to input into the T2S. sample_text.txt has been provided for you among the sources. The easiest way to produce a similar text files for testing is to say something to an AI chat bot such as ChatGPT and saving the response.
