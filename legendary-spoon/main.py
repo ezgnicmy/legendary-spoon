@@ -114,6 +114,13 @@ def remove_listed_files(file_list):
         except BaseException:
             logging.exception('Exception while deleting the temporary image list file \'%s\'', file)
 
+# Exit the execution if the exit code is not 0 (meaning 'no error')
+def exit_on_failure(exit_code):
+    if exit_code != 0:
+        sys.exit(exit_code)
+   
+
+
 # Method part end
 
 
@@ -153,7 +160,9 @@ def main():
     
     parser.add_argument("--resolution", action="store", help="Set the video resolution (default: 640x360)", metavar="WIDTHxHEIGHT")
     parser.add_argument("--animation", action="store_true", help="Enable to switch off random image order.")
-    parser.add_argument("--imgduration", action="store", type=int, help="The directory where the images for the image slideshow are..", metavar="IMAGE_DURATION")
+    parser.add_argument("--imgduration", action="store", type=int, help="The time in seconds a single image is shown before the next one", metavar="IMAGE_DURATION")
+    
+    parser.add_argument("--voice", action="store", help="The name the voice chosen for the text-to-speech", metavar="VOICE_NAME_PARTIAL")
 
     cwd = os.getcwd() # Current working directory
 
@@ -348,7 +357,14 @@ def main():
     except BaseException:
         logging.exception('Exception while converting --imgduration parameter \'%s\'', args.imgduration)
 
-
+    # Flag --voice: Let the user choose the voice
+    t2s_voice_command = ''
+    try:
+        if args.voice is not None and len(args.voice) > 0: # A zero-length '' will mess with the subprocess execution
+            t2s_voice_command = ' -n {}'.format(args.voice)
+    except BaseException:
+        logging.exception('Exception while reading --voice parameter \'%s\', trying to use the default voice', args.voice)
+        t2s_voice_command = '' # Removes the faulty parameter
 
 
     # TODO: Let the user set up the program parameters preferably with a graphical front-end with preset common program options
@@ -360,7 +376,7 @@ def main():
     # Case 1: Try to test for balcon, you can add other options as elif's 
     #print(text_to_speech_program_path) # DEBUG
     if text_to_speech_program_path is not None and 'balcon' in text_to_speech_program_path:
-        command_parameter_string = "-f {0} -w {1}".format(full_input_path, os.path.abspath(chosen_file_name_base + balcon_output_extension))
+        command_parameter_string = "-f {0} -w {1}{2}".format(full_input_path, os.path.abspath(chosen_file_name_base + balcon_output_extension), t2s_voice_command)
         split_command = command_parameter_string.split(" ")
     #print(command_parameter_string) # DEBUG
     #print(split_command) #DEBUG
@@ -454,7 +470,8 @@ def main():
     # Step #1: Do the T2S 
     #    print([text_to_speech_program_path, command_parameter_string], split_command, ["python", "--version"]) # DEBUG?
     # These subprocess tasks are treated as failure intolerant. You can change this later if you want to make things more failure proof and incorporate alternative solutions
-    command_line_execute(whitespace_split_command= program_path_list + split_command, success_message="The text-to-speech program executed successfully.", failure_message='An error occurred with the text-to-speech program. Check if the program is open in another program and close it or use another output file name.')
+    exit_on_failure( command_line_execute(whitespace_split_command= program_path_list + split_command, success_message="The text-to-speech program executed successfully.", failure_message='An error occurred with the text-to-speech program. Check if the program is open in another program and close it or use another output file name.') )
+    
 
 
     # Step #2: Do the video generation

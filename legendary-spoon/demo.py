@@ -138,6 +138,7 @@ def main():
     imgdir_env_variable = 'LEGENDARY_SPOON_IMGDIR'
     balcon_path_env_variable = 'LEGENDARY_SPOON_BALCON_PATH'
     ffmpeg_path_env_variable = 'LEGENDARY_SPOON_FFMPEG_PATH'
+    voice_env_variable = 'LEGENDARY_SPOON_VOICE'
     
 #    print('img evn:' + str(os.environ.get(imgdir_env_variable ))) # DEBUG
 #    print('bal evn:' + str(os.environ.get(balcon_path_env_variable ))) # DEBUG
@@ -150,9 +151,9 @@ def main():
     print('\nThis is a demo of the video generation tool. It relies on other software and assets, so you need to download and install them for it to work.')
     print('\n1. If you do not have images already, you can download some from here: https://archive.org/details/2020-random-memes ')
     print('\n2. If you do not have balcon, you can download it from here: https://cross-plus-a.com/bconsole.htm ')
-    print('\n3. Finally, if you do not yet have ffmpeg installed, you can get it from here: https://ffmpeg.org/download.html')
+    print('\n3. If you do not yet have ffmpeg installed, you can get it from here: https://ffmpeg.org/download.html')
 
-    image_dir, balcon_path, ffmpeg_path = (None,)*3
+    image_dir, balcon_path, ffmpeg_path, balcon_voice = (None,)*4
 
   
     image_dir_input_msg = "\nGive the path of the image directory you want to source images from, unless you have set it earlier (with this prompt or manually with {0} env variable): > ".format(imgdir_env_variable)
@@ -176,6 +177,19 @@ def main():
     
     ffmpeg_path = check_loop(ffmpeg_path, ffmpeg_path_env_variable, ffmpeg_input_msg, is_file = True) # Stored file and possible a prompt
 
+    balcon_voice_msg = "\nOptionally, input the name of the voice you want to use or type \'list\' to print a list of all voices or press enter to use the default voice: > "
+    balcon_list_command = '{0} -l'.format(balcon_path).split(" ")
+    balcon_voice_command = ''
+    while True:
+        tmp_voice = user_input( balcon_voice_msg)
+        if tmp_voice == 'list':
+            subprocess.call(balcon_list_command)
+            continue
+        elif tmp_voice == '': # Use the default voice
+            break
+        else:
+            balcon_voice_command = ' --voice {}'.format(tmp_voice) # Use whatever the user parameter is
+            break
 
     # Let's see if the variables have changed
     #print('img evn:' + str(os.environ.get(imgdir_env_variable ))) # DEBUG
@@ -192,7 +206,7 @@ def main():
     # Now use those collected paths to input them into the video generator with subprocess
     # sample_story.txt is provided by the repository
 
-    command_split = 'python main.py -i sample_story.txt -s balcon {} ffmpeg {} -p balcon -v ffmpeg --imgdir {}'.format(balcon_path, ffmpeg_path, image_dir).split(" ")
+    command_split = 'python main.py -i sample_story.txt -s balcon {} ffmpeg {} -p balcon -v ffmpeg --imgdir {}{}'.format(balcon_path, ffmpeg_path, image_dir, balcon_voice_command).split(" ")
 
     try:
         subprocess.call(command_split)
