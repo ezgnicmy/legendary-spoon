@@ -1,9 +1,11 @@
 # legendary-spoon
+
 Makes a video based on minimum inputs and user interaction
 
 In practice, it can generate a simple yet somewhat configurable slideshow video with text-to-speech audio from a text file and an image directory in about 30 seconds or less. That is when using the current configuration of balcon (T2S) and ffmpeg (video compositing). It is a way more useful than spending minutes doing it by hand and praying that the video editor does not crash.
 
 ## Functionality
+
 A text file (input) -> a command line text-to-speech program (customizable, e.g. balcon i.e. a command-line version of balabolka )
 +
 a image directory for generation for generating the slideshow + the T2S audio -> ffmpeg (video-audio compositing)
@@ -45,40 +47,71 @@ The images are re-scaled in a clever way that maintains the proportions by addin
 ## The command listing
 
 usage: main.py [-h] [-s [PROGRAM_ALIAS [PROGRAM_PATH ...]]]
+
                [-p TEXT2SPEECH_PROGRAM_ALIAS_OR_PATH] [-i INPUT_FILE]
+               
                [-v VIDEO_PROGRAM] [-o OUTPUT_FILE] [--imgdir IMAGE_DIRECTORY]
+               
                [--resolution WIDTHxHEIGHT] [--animation]
-               [--imgduration IMAGE_DURATION]
+               
+               [--imgduration IMAGE_DURATION] [--voice VOICE_NAME_PARTIAL]
 
 Text-to-Video Converter
 
 optional arguments:
+
   -h, --help            show this help message and exit
+  
   -s [PROGRAM_ALIAS [PROGRAM_PATH ...]]
-                        Save a program path, syntax PROGRAM_ALIAS PROGRAM_PATH
-                        {PROGRAM_ALIAS PROGRAM_PATH}, is read before -p
-                        allowing you to immediately use it. You can give
+  
+                        Save a program path, syntax PROGRAM_ALIAS PROGRAM_PATH                        
+                        {PROGRAM_ALIAS PROGRAM_PATH}, is read before -p                        
+                        allowing you to immediately use it. You can give                        
                         multiple -s flags and they will all be processed.
+                        
   -p TEXT2SPEECH_PROGRAM_ALIAS_OR_PATH
-                        The preset program path alias or the full TEXT2SPEECH
+  
+                        The preset program path alias or the full TEXT2SPEECH                        
                         program path, use -s flag to set a preset
-  -i INPUT_FILE         The text file used to generate the audio file text-to-
+                        
+  -i INPUT_FILE         
+  
+                        The text file used to generate the audio file text-to-  
                         speech style from.
-  -v VIDEO_PROGRAM      The path to the video generation / converter /
-                        rendering program such as ffmpeg, used to put the
+                        
+  -v VIDEO_PROGRAM 
+  
+                        The path to the video generation / converter /  
+                        rendering program such as ffmpeg, used to put the                        
                         speech into a video.
-  -o OUTPUT_FILE        The output file name. Usually defaults to output.[EXT]
-                        (.wav and .mp4), depending on the used text-to-speech
+                        
+  -o OUTPUT_FILE        
+  
+                        The output file name. Usually defaults to output.[EXT]  
+                        (.wav and .mp4), depending on the used text-to-speech                        
                         program.
+                        
   --imgdir IMAGE_DIRECTORY
-                        The directory where the images for the image slideshow
+  
+                        The directory where the images for the image slideshow                        
                         are..
+                        
   --resolution WIDTHxHEIGHT
+  
                         Set the video resolution (default: 640x360)
-  --animation           Enable to switch off random image order.
+                        
+  --animation           
+  
+                        Enable to switch off random image order.
+  
   --imgduration IMAGE_DURATION
-                        The directory where the images for the image slideshow
-                        are..
+  
+                        The time in seconds a single image is shown before the                        
+                        next one
+                        
+  --voice VOICE_NAME_PARTIAL
+  
+                        The name the voice chosen for the text-to-speech
 
 For example, type 'python main.py -s balcon FULL_FILE_SYSTEM_PATH_TO_BALCON -i
 text_for_speech.txt -p balcon -o output.wav' to produce a computer-voiced
@@ -90,7 +123,9 @@ python main.py --help
 
 
 ## Spare ideas
+
 1. Using recorded audio as the audio track instead of text
 
 ## Demo video
+
 https://www.youtube.com/watch?v=BZ7CwPpXuvs 
