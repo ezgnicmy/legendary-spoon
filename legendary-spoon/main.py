@@ -134,9 +134,9 @@ def main():
     # Possible: add checking for the program type ("text2speech" or "video") # NOT IMPLEMENTED
     # Used by -p and -v flags
 
-    # Set video dimensions - e.g. 640x360 (16:9) is the 360p resolution YouTube uses
-    video_width = "640"
-    video_height = "360"
+    # Set video dimensions - e.g. 1280x720 (16:9) is the 720p resolution YouTube and many other sites use - a higher resolution increases the file size and the conversion duration
+    video_width = "1280"
+    video_height = "720"
 
     # The duration individual images will be shown on-screen in seconds
     default_image_duration = '6'
@@ -158,7 +158,7 @@ def main():
     
     # Extra features: 1) video dimensions, 2) animation mode (non-shuffled) and 3) still image duration
     
-    parser.add_argument("--resolution", action="store", help="Set the video resolution (default: 640x360)", metavar="WIDTHxHEIGHT")
+    parser.add_argument("--resolution", action="store", help="Set the video resolution (default: {0}x{1})".format(video_width, video_height), metavar="WIDTHxHEIGHT")
     parser.add_argument("--animation", action="store_true", help="Enable to switch off random image order.")
     parser.add_argument("--imgduration", action="store", type=int, help="The time in seconds a single image is shown before the next one", metavar="IMAGE_DURATION")
     
@@ -330,7 +330,7 @@ def main():
         print('Error - {} is not an existing directory.'.format(image_directory))
 
 
-    # Flag --resolution: Changes the resolution, default 640x360, reverts to the default if a bad parameter is detected to avoid a distorted outcome
+    # Flag --resolution: Changes the resolution, reverts to the default if a bad parameter is detected
     try:
         if args.resolution is not None:
             tmp_split_list = args.resolution.lower().split('x')
@@ -402,15 +402,14 @@ def main():
     ''' # COMMENT_END
 
     # Get a file list with full file paths, excluding the directories - further type checks could pointlessly exclude future file types
-    image_list = [os.path.join(image_directory, file) for file in os.listdir(image_directory) if os.path.isfile(os.path.join(image_directory, file))]
+    image_list = [os.path.join(image_directory, file) for file in os.listdir( os.path.abspath(image_directory) ) if os.path.isfile(os.path.join(image_directory, file))]
 
     # Create an -i option for every image file separately - ffmpeg works best that way bc otherwise it will try to apply the same codec for all of the files
     image_input_param_string = ''
     stream_selections = ''
     for i in range(len(image_list)):
-        image_input_param_string = image_input_param_string + '-i {} '.format(image_list[i])
+        image_input_param_string = image_input_param_string + '-i \"{}\" '.format(image_list[i])
         stream_selections = stream_selections + '[{}:v] '.format(str(i))
-
 
 
 
@@ -510,11 +509,14 @@ def main():
         if video_parameter_string is not None:
             image_count = len(image_list)
             # Step 1: generate video chunks per image (sidesteps multiple image format issues)
+            # UPDATE: Split the video_chunk_command_string into parts to make sure the image file name does not get split for having a whitespace character in it
             while(video_duration_left > 0):
                 tmp_video_chunk_file_name = str(chosen_file_name_base + "_video_only_" + str(video_chunk_count) + chosen_file_name_extension)
                 tmp_current_duration = int(selected_image_duration) if int(selected_image_duration) < int(video_duration_left) else int(video_duration_left)
-                video_chunk_command_string = "-i {0} -vf scale=w={1}:h={2}:force_original_aspect_ratio=1,pad={1}:{2}:(ow-iw)/2:(oh-ih)/2 -t {3} -pix_fmt yuv420p -nostats -hide_banner -an {4}".format( image_list[ video_chunk_count % image_count ], video_width, video_height, str(tmp_current_duration), tmp_video_chunk_file_name)
-                split_video_chunk_command = video_chunk_command_string.split(" ")
+                video_chunk_command_string0 = "-i"
+                video_chunk_command_string1 = "{0}".format( image_list[ video_chunk_count % image_count ])
+                video_chunk_command_string2 = "-vf scale=w={0}:h={1}:force_original_aspect_ratio=1,pad={0}:{1}:(ow-iw)/2:(oh-ih)/2 -t {2} -pix_fmt yuv420p -nostats -hide_banner -an {3}".format( video_width, video_height, str(tmp_current_duration), tmp_video_chunk_file_name)
+                split_video_chunk_command = [video_chunk_command_string0, video_chunk_command_string1] + video_chunk_command_string2.split(" ")
                 # Generates the chunk
                 tmp_ret = command_line_execute(whitespace_split_command= [video_program_path] + split_video_chunk_command, success_message="", failure_message="Failed to generate a video chunk.")
                 # Add the new file if the chunk generation produces a clean result, else keep it as is
