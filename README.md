@@ -98,7 +98,7 @@ optional arguments:
                         
   --resolution WIDTHxHEIGHT
   
-                        Set the video resolution (default: 640x360)
+                        Set the video resolution (default: 1280x720)
                         
   --animation           
   
