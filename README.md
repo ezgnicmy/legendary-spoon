@@ -2,7 +2,7 @@
 
 Makes a video based on minimum inputs and user interaction
 
-In practice, it can generate a simple yet somewhat configurable slideshow video with text-to-speech audio from a text file and an image directory in about 30 seconds or less. That is when using the current configuration of balcon (T2S) and ffmpeg (video compositing). It is a way more useful than spending minutes doing it by hand and praying that the video editor does not crash.
+In practice, it can generate a simple yet somewhat configurable slideshow video with text-to-speech audio from a text file and an image directory in about 30 seconds or less for 640x360 and a couple minutes for 1280x720 (the current default output resolution). That is when using the current configuration of balcon (T2S) and ffmpeg (video compositing). It is a way more useful than spending minutes doing it by hand and praying that the video editor does not crash.
 
 ## Functionality
 
@@ -11,7 +11,7 @@ A text file (input) -> a command line text-to-speech program (customizable, e.g.
 a image directory for generation for generating the slideshow + the T2S audio -> ffmpeg (video-audio compositing)
 -> a video slideshow with the T2S audio track that should play without issues on most players and get accepted to video hosting platforms
 
-The design is so that one could later expand it to support arbitrary parameters and software as it is mostly just a pass-through to the command-line software that generate the audio and video. The best way to implement that would be to add a smart configuring tool that would either extract the parameters needed straight from the source program or to use a text-file-based scheme where the user could specify the command-line passing template for an arbitrary program. The goal would be to make it as simple as editing a configuration file and so that the user-side could update the specifications to match its needs and the changes.
+The design is so that one could later expand it to support arbitrary parameters and software as it is mostly just a pass-through to the command-line software that generate the audio and video. The best way to implement that would be to add a smart configuring tool that would either extract the parameters needed straight from the source program or to use a text-file-based scheme where the user could specify the command-line passing template for an arbitrary program. (Currently it is not implemented like that though it is compatible with that kind of design.) The goal would be to make it as simple as editing a configuration file and so that the user-side could update the specifications to match its needs and the changes.
 
 This project is spec'd for Python 3.4.3 (released February 25th, 2015) i.e. the last version that officially supports Windows XP. It should work with later versions. Just look up "python download" and you will probably find what you need.
 
