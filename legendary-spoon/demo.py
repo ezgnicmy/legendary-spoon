@@ -177,11 +177,20 @@ def main():
     
     ffmpeg_path = check_loop(ffmpeg_path, ffmpeg_path_env_variable, ffmpeg_input_msg, is_file = True) # Stored file and possible a prompt
 
-    balcon_voice_msg = "\nOptionally, input the name of the voice you want to use or type \'list\' to print a list of all voices or press enter to use the default voice: > "
+    balcon_voice_msg = "\nOptionally, input ONE UNIQUE NAME WORD of the voice you want to use or type \'list\' to print a list of all voices or press enter to use the default voice: > "
     balcon_list_command = '{0} -l'.format(balcon_path).split(" ")
     balcon_voice_command = ''
+    tmp_voice = '' # Needed in the larger scope to show the parameter value later
     while True:
         tmp_voice = user_input( balcon_voice_msg)
+        
+        # Cut the name parameter down to one word that balcon expects as a parameter
+        tmp_voice0 = tmp_voice
+        tmp_voice_split = tmp_voice.split()
+        if len(tmp_voice_split) > 0:
+            # Take the last word in the voice name string and use it as a balcon voice parameter
+            tmp_voice = tmp_voice_split[-1]
+
         if tmp_voice == 'list':
             subprocess.call(balcon_list_command)
             continue
@@ -201,6 +210,8 @@ def main():
     #print('ff param:' + str( ffmpeg_path)) # DEBUG
 
 
+    if tmp_voice != '':
+        print('\nA voice word parameter was given and the word used was: {}'.format(tmp_voice))
     print('\nParameters received, attempting to generate a video with them...')
 
     # Now use those collected paths to input them into the video generator with subprocess
